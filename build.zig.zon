@@ -1,0 +1,14 @@
+.{
+    .name = .sudoku_fast,
+    .fingerprint = 0x785ce3d29b3bd24d,
+    .version = "0.0.0",
+    .dependencies = .{},
+
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "linker_risky.ld",
+        "linker_safe.ld",
+        "src",
+    },
+}
