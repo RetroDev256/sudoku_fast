@@ -169,18 +169,14 @@ fn check(grid: *const [81]u8, idx: u32) bool {
 }
 
 fn rows(grid: *const [81]u8, idx: u32) bool {
-    const row = idx / 9;
-    const col = idx % 9;
+    const row_off = (idx / 9) * 9;
+    const source_array: [9]u8 = grid[row_off..][0..9].*;
 
-    for (0..9) |cmp| {
-        if (cmp == col) continue;
-        const cmp_idx = cmp + row * 9;
-        if (grid[idx] == grid[cmp_idx]) {
-            return false;
-        }
-    }
-
-    return true;
+    const Vec = @Vector(9, u8);
+    const row_vec: Vec = source_array;
+    const cmp = row_vec == @as(Vec, @splat(grid[idx]));
+    const cmp_vu8: Vec = @intFromBool(cmp);
+    return @reduce(.Add, cmp_vu8) == 1;
 }
 
 fn cols(grid: *const [81]u8, idx: u32) bool {
@@ -199,20 +195,20 @@ fn cols(grid: *const [81]u8, idx: u32) bool {
 }
 
 fn blocks(grid: *const [81]u8, idx: u32) bool {
-    const block_row = (idx / 9) / 3;
-    const block_col = (idx % 9) / 3;
-
-    for (0..3) |cmp_row_off| {
-        for (0..3) |cmp_col_off| {
-            const cmp_row = cmp_row_off + block_row * 3;
-            const cmp_col = cmp_col_off + block_col * 3;
+    var source_array: [9]u8 = undefined;
+    for (0..3) |row| {
+        for (0..3) |col| {
+            const offset = col + row * 3;
+            const cmp_row = row + (idx / 27) * 3;
+            const cmp_col = col + ((idx % 9) / 3) * 3;
             const cmp_idx = cmp_col + cmp_row * 9;
-            if (cmp_idx == idx) continue;
-            if (grid[idx] == grid[cmp_idx]) {
-                return false;
-            }
+            source_array[offset] = grid[cmp_idx];
         }
     }
 
-    return true;
+    const Vec = @Vector(9, u8);
+    const row_vec: Vec = source_array;
+    const cmp = row_vec == @as(Vec, @splat(grid[idx]));
+    const cmp_vu8: Vec = @intFromBool(cmp);
+    return @reduce(.Add, cmp_vu8) == 1;
 }
