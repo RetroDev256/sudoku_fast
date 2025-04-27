@@ -98,6 +98,7 @@ fn failWithUsage(program: []const u8) noreturn {
         \\cointain at the least.
         \\
         \\Where PUZZLES_OUT is the file to write the solved puzzles.
+        \\
     , .{program});
     std.process.exit(1);
 }
@@ -113,7 +114,7 @@ fn solve(initial: *const [81]u8, state: *[81]u8) bool {
             assert(cell >= 1 and cell <= 9);
         }
 
-        while (check(state)) {
+        while (check(state, current)) {
             // search for a cell we can change
             while (state[current] != 0) {
                 if (current == 80) {
@@ -161,74 +162,54 @@ fn solve(initial: *const [81]u8, state: *[81]u8) bool {
     }
 }
 
-// return true on success - ignore cells == 0
-fn check(grid: *const [81]u8) bool {
-    return rows(grid) and cols(grid) and blocks(grid);
+// return true on success - skip cells == 0
+fn check(grid: *const [81]u8, idx: u32) bool {
+    if (grid[idx] == 0) return true;
+    return rows(grid, idx) and cols(grid, idx) and blocks(grid, idx);
 }
 
-// return true on success - ignore cells == 0
-fn rows(grid: *const [81]u8) bool {
-    for (0..9) |row| {
-        var mask: u32 = 0;
-        for (0..9) |col| {
-            const idx = col + row * 9;
-            // we know the solver has not reached this point
-            if (grid[idx] == 0) return true;
+fn rows(grid: *const [81]u8, idx: u32) bool {
+    const row = idx / 9;
+    const col = idx % 9;
 
-            const shift: u5 = @intCast(grid[idx]);
-
-            if ((mask >> shift) & 1 == 1) {
-                return false;
-            } else {
-                mask |= @as(u32, 1) << shift;
-            }
+    for (0..9) |cmp| {
+        if (cmp == col) continue;
+        const cmp_idx = cmp + row * 9;
+        if (grid[idx] == grid[cmp_idx]) {
+            return false;
         }
     }
 
     return true;
 }
 
-// return true on success - ignore cells == 0
-fn cols(grid: *const [81]u8) bool {
-    for (0..9) |col| {
-        var mask: u32 = 0;
-        for (0..9) |row| {
-            const idx = col + row * 9;
-            if (grid[idx] == 0) continue;
+fn cols(grid: *const [81]u8, idx: u32) bool {
+    const row = idx / 9;
+    const col = idx % 9;
 
-            const shift: u5 = @intCast(grid[idx]);
-
-            if ((mask >> shift) & 1 == 1) {
-                return false;
-            } else {
-                mask |= @as(u32, 1) << shift;
-            }
+    for (0..9) |cmp| {
+        if (cmp == row) continue;
+        const cmp_idx = col + cmp * 9;
+        if (grid[idx] == grid[cmp_idx]) {
+            return false;
         }
     }
 
     return true;
 }
 
-// return true on success - ignore cells == 0
-fn blocks(grid: *const [81]u8) bool {
-    for (0..3) |b_row| {
-        for (0..3) |b_col| {
-            var mask: u32 = 0;
-            for (0..3) |sub_row| {
-                for (0..3) |sub_col| {
-                    const row = sub_row + b_row * 3;
-                    const col = sub_col + b_col * 3;
-                    const idx = col + row * 9;
-                    if (grid[idx] == 0) continue;
+fn blocks(grid: *const [81]u8, idx: u32) bool {
+    const block_row = (idx / 9) / 3;
+    const block_col = (idx % 9) / 3;
 
-                    const shift: u5 = @intCast(grid[idx]);
-
-                    if ((mask >> shift) & 1 == 1) {
-                        return false;
-                    } else {
-                        mask |= @as(u32, 1) << shift;
-                    }
-                }
+    for (0..3) |cmp_row_off| {
+        for (0..3) |cmp_col_off| {
+            const cmp_row = cmp_row_off + block_row * 3;
+            const cmp_col = cmp_col_off + block_col * 3;
+            const cmp_idx = cmp_col + cmp_row * 9;
+            if (cmp_idx == idx) continue;
+            if (grid[idx] == grid[cmp_idx]) {
+                return false;
             }
         }
     }
