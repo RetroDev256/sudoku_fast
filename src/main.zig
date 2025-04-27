@@ -170,22 +170,20 @@ fn check(grid: *const [81]u8, idx: u32) bool {
 
 fn rows(grid: *const [81]u8, idx: u32) bool {
     const row_off = (idx / 9) * 9;
-    const source_array: [9]u8 = grid[row_off..][0..9].*;
 
     const Vec = @Vector(9, u8);
-    const row_vec: Vec = source_array;
+    const row_vec: Vec = grid[row_off..][0..9].*;
     const cmp = row_vec == @as(Vec, @splat(grid[idx]));
     const cmp_vu8: Vec = @intFromBool(cmp);
     return @reduce(.Add, cmp_vu8) == 1;
 }
 
 fn cols(grid: *const [81]u8, idx: u32) bool {
-    const row = idx / 9;
     const col = idx % 9;
 
     for (0..9) |cmp| {
-        if (cmp == row) continue;
         const cmp_idx = col + cmp * 9;
+        if (cmp_idx == idx) continue;
         if (grid[idx] == grid[cmp_idx]) {
             return false;
         }
