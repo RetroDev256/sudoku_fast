@@ -193,20 +193,19 @@ fn cols(grid: *const [81]u8, idx: u32) bool {
 }
 
 fn blocks(grid: *const [81]u8, idx: u32) bool {
-    var source_array: [9]u8 = undefined;
-    for (0..3) |row| {
-        for (0..3) |col| {
-            const offset = col + row * 3;
-            const cmp_row = row + (idx / 27) * 3;
-            const cmp_col = col + ((idx % 9) / 3) * 3;
+    const block_row = (idx / 9) / 3;
+    const block_col = (idx % 9) / 3;
+    var count: u32 = 0;
+
+    for (0..3) |cmp_row_off| {
+        for (0..3) |cmp_col_off| {
+            const cmp_row = cmp_row_off + block_row * 3;
+            const cmp_col = cmp_col_off + block_col * 3;
             const cmp_idx = cmp_col + cmp_row * 9;
-            source_array[offset] = grid[cmp_idx];
+            const match = grid[idx] == grid[cmp_idx];
+            count += @intFromBool(match);
         }
     }
 
-    const Vec = @Vector(9, u8);
-    const row_vec: Vec = source_array;
-    const cmp = row_vec == @as(Vec, @splat(grid[idx]));
-    const cmp_vu8: Vec = @intFromBool(cmp);
-    return @reduce(.Add, cmp_vu8) == 1;
+    return count == 1;
 }
